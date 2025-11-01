@@ -14,20 +14,20 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // Updated to match existing Vercel environment variable names
 export const STRIPE_PRICE_IDS: Record<string, { monthly: string; yearly: string }> = {
   [GoolixTier.CREATOR]: {
-    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || 'price_1SKNnHBPgAq2ybOWrz7lekrZ',
-    yearly: process.env.STRIPE_PRICE_STARTER_ANNUAL || 'price_1SKNnpBPgAq2ybOWqfeNLWEm',
+    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || 'price_1SNyVsBPgAq2ybOWeOkPSt6e', // $29/month
+    yearly: process.env.STRIPE_PRICE_STARTER_ANNUAL || 'price_1SNyVsBPgAq2ybOWeOkPSt6e',
   },
   [GoolixTier.PRO]: {
-    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_1SKNnIBPgAq2ybOWP8Fi7GC9',
-    yearly: process.env.STRIPE_PRICE_PRO_ANNUAL || 'price_1SKNnpBPgAq2ybOWpVKdR5Zc',
+    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_1SNyVsBPgAq2ybOWcCbMozo9', // $79/month
+    yearly: process.env.STRIPE_PRICE_PRO_ANNUAL || 'price_1SNyVsBPgAq2ybOWcCbMozo9',
   },
   [GoolixTier.ENTERPRISE]: {
-    monthly: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || 'price_1SKNnIBPgAq2ybOWniqFfRau',
-    yearly: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL || 'price_1SKNnqBPgAq2ybOWFf1Qhmgt',
+    monthly: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || 'price_1SNyWEBPgAq2ybOWeGgn8nL2', // $299/month
+    yearly: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL || 'price_1SNyWEBPgAq2ybOWeGgn8nL2',
   },
   [GoolixTier.AGENCY]: {
-    monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY || 'price_1SKNnJBPgAq2ybOWC8HCLD0E',
-    yearly: process.env.STRIPE_PRICE_AGENCY_ANNUAL || 'price_1SKNnqBPgAq2ybOWY2ob8J5z',
+    monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY || 'price_1SNyWIBPgAq2ybOWhRq1i9JY', // $999/month
+    yearly: process.env.STRIPE_PRICE_AGENCY_ANNUAL || 'price_1SNyWIBPgAq2ybOWhRq1i9JY',
   },
 };
 
