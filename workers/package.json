@@ -1,0 +1,21 @@
+{
+  "name": "authichain-workers",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers API for AuthiChain",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:production": "wrangler deploy --env production",
+    "tail": "wrangler tail",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "wrangler": "^3.22.1",
+    "vitest": "^1.1.0"
+  }
+}

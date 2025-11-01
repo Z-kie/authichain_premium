@@ -1,0 +1,28 @@
+name = "authichain-automation"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "4c1869b90f13f86940aa3747839bf420"
+
+[triggers]
+crons = ["0 * * * *"]
+
+# D1 Database Configuration
+[[d1_databases]]
+binding = "DB"
+database_name = "authichain-db"
+database_id = "ebd8081b-ac13-485a-8b0e-a6cd9c0f7be5"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+script_name = "authichain-automation"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RateLimiter"]
+
+[vars]
+ENVIRONMENT = "production"
+CONTRACT_ADDRESS = "0xYourContractAddressHere"
+ALLOWED_ORIGINS = "*"

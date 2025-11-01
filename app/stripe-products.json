@@ -1,0 +1,32 @@
+[
+  {
+    "tier": "EXPLORER",
+    "productId": "prod_TGfsnriMTmEMRR",
+    "monthlyPriceId": null,
+    "annualPriceId": null
+  },
+  {
+    "tier": "CREATOR",
+    "productId": "prod_TGfsF3a3zkEEBV",
+    "monthlyPriceId": "price_1SK8Wg0a9vBOrGn4IpcfHgOk",
+    "annualPriceId": "price_1SK8Wg0a9vBOrGn4D2np0Bk2"
+  },
+  {
+    "tier": "PRO",
+    "productId": "prod_TGfsDonMkmPKzF",
+    "monthlyPriceId": "price_1SK8Wg0a9vBOrGn4qHlBQsap",
+    "annualPriceId": "price_1SK8Wh0a9vBOrGn4G6HT4b92"
+  },
+  {
+    "tier": "ENTERPRISE",
+    "productId": "prod_TGfsOQ243V7lnx",
+    "monthlyPriceId": "price_1SK8Wh0a9vBOrGn4HBLHqyMP",
+    "annualPriceId": "price_1SK8Wh0a9vBOrGn4Xfp0kIHH"
+  },
+  {
+    "tier": "AGENCY",
+    "productId": "prod_TGfsZZLg4Ds3Q2",
+    "monthlyPriceId": "price_1SK8Wi0a9vBOrGn46Ok8mz5S",
+    "annualPriceId": "price_1SK8Wi0a9vBOrGn49o7afxzh"
+  }
+]

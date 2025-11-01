@@ -1,0 +1,1648 @@
+generator client {
+    provider = "prisma-client-js"
+    output = "../node_modules/.prisma/client"
+    binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+    previewFeatures = ["jsonProtocol"]
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  password             String
+  username             String?               @unique
+  firstName            String
+  lastName             String
+  walletAddress        String?
+  image                String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  acceptTerms          Boolean               @default(false)
+  subscriptionTier     SubscriptionTier      @default(EXPLORER)
+  customUsername       String?               @unique
+  isVerified           Boolean               @default(false)
+  stripeCustomerId     String?               @unique
+  role                 UserRole              @default(CONSUMER)
+  signupNumber         Int? // Track signup order for launch bonuses
+  referredBy           String? // Referral code used at signup
+  totalReferrals       Int                   @default(0)
+  referralEarnings     Float                 @default(0)
+  // Onboarding tracking
+  onboardingCompleted  Boolean               @default(false)
+  tutorialCompleted    Boolean               @default(false)
+  walletConnected      Boolean               @default(false)
+  firstNFTMinted       Boolean               @default(false)
+  firstPurchaseMade    Boolean               @default(false)
+  onboardingStep       Int                   @default(0)
+  accounts             Account[]
+  clientCommissions    ArtCommission[]       @relation("ClientCommissions")
+  artworkLikes         ArtworkLike[]
+  cannabisArtist       CannabisArtist?
+  createdNFTs          CannabisNFT[]         @relation("CreatedNFTs")
+  ownedNFTs            CannabisNFT[]         @relation("OwnedNFTs")
+  cannabisProfessional CannabisProfessional?
+  nftLikes             NFTLike[]
+  boughtNFTs           NFTSale[]             @relation("BoughtNFTs")
+  soldNFTs             NFTSale[]             @relation("SoldNFTs")
+  nftUploads           NftUpload[]
+  qrScans              QRScan[]
+  referralCodes        ReferralCode[]
+  sessions             Session[]
+  subscriptions        Subscription[]
+  usageRecords         UsageRecord[]
+  bonusPackages        BonusPackageAssignment[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  tier                 SubscriptionTier
+  status               SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NftUpload {
+  id              String    @id @default(cuid())
+  userId          String
+  title           String
+  description     String?
+  imageUrl        String
+  tokenId         String?
+  contractAddress String?
+  blockchain      String    @default("ethereum")
+  status          NftStatus @default(ACTIVE)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UsageRecord {
+  id        String    @id @default(cuid())
+  userId    String
+  action    UsageType
+  count     Int       @default(1)
+  month     Int
+  year      Int
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, action, month, year])
+  @@index([userId, month, year])
+}
+
+model MarketingLead {
+  id                  String           @id @default(cuid())
+  email               String           @unique
+  source              String
+  campaign            String
+  lastCampaign        String
+  lastSource          String
+  touchCount          Int              @default(1)
+  status              LeadStatus       @default(ACTIVE)
+  tags                String[]
+  lastConversion      String?
+  lastConversionValue Float?
+  lastConversionDate  DateTime?
+  firstName           String?
+  lastName            String?
+  interests           String[]         @default([])
+  leadScore           Int              @default(0)
+  lifecycleStage      String           @default("LEAD")
+  lastEngagementDate  DateTime?
+  totalEngagements    Int              @default(0)
+  averageEngagementScore Float         @default(0)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  events              MarketingEvent[]
+  downloads           LeadMagnetDownload[]
+
+  @@index([email])
+  @@index([campaign])
+  @@index([createdAt])
+}
+
+model MarketingEvent {
+  id               String         @id @default(cuid())
+  email            String?
+  event            String
+  campaign         String
+  source           String
+  value            Float          @default(0)
+  subscriptionTier String?
+  metadata         Json?
+  createdAt        DateTime       @default(now())
+  lead             MarketingLead? @relation(fields: [email], references: [email])
+
+  @@index([event])
+  @@index([campaign])
+  @@index([createdAt])
+}
+
+model MarketingCampaign {
+  id             String         @id @default(cuid())
+  name           String         @unique
+  type           CampaignType
+  status         CampaignStatus @default(ACTIVE)
+  description    String?
+  targetRevenue  Float?
+  actualRevenue  Float          @default(0)
+  conversionGoal String
+  startDate      DateTime       @default(now())
+  endDate        DateTime?
+  settings       Json
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([type])
+  @@index([status])
+}
+
+model ReferralCode {
+  id            String               @id @default(cuid())
+  code          String               @unique
+  userId        String?
+  type          ReferralType         @default(USER)
+  commission    Float                @default(0.2)
+  usageCount    Int                  @default(0)
+  totalEarnings Float                @default(0)
+  isActive      Boolean              @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime             @default(now())
+  user          User?                @relation(fields: [userId], references: [id])
+  referrals     ReferralConversion[]
+  performance   AffiliatePerformance[]
+
+  @@index([code])
+  @@index([userId])
+}
+
+model ReferralConversion {
+  id               String           @id @default(cuid())
+  referralCodeId   String
+  convertedEmail   String
+  subscriptionTier String
+  revenue          Float
+  commission       Float
+  status           ConversionStatus @default(PENDING)
+  paidAt           DateTime?
+  createdAt        DateTime         @default(now())
+  referralCode     ReferralCode     @relation(fields: [referralCodeId], references: [id])
+
+  @@index([referralCodeId])
+  @@index([convertedEmail])
+}
+
+model CannabisStrain {
+  id              String            @id @default(cuid())
+  name            String            @unique
+  type            StrainType
+  description     String?
+  imageUrl        String?
+  genetics        Json
+  heritage        Json
+  characteristics Json
+  rarityScore     Float             @default(50)
+  isVerified      Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  nfts            CannabisNFT[]
+  packages        CannabisPackage[]
+
+  @@index([type])
+  @@index([rarityScore])
+  @@index([isVerified])
+}
+
+model CannabisPackage {
+  id                  String               @id @default(cuid())
+  packageId           String               @unique
+  qrCode              String               @unique
+  strainId            String
+  growerId            String
+  harvestDate         DateTime
+  packageDate         DateTime
+  expirationDate      DateTime
+  netWeight           Float
+  batchNumber         String
+  labTestId           String?
+  stateTrackingNumber String?
+  location            Json?
+  cultivationData     Json?
+  status              PackageStatus        @default(ACTIVE)
+  scannedCount        Int                  @default(0)
+  lastScanned         DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  nfts                CannabisNFT[]
+  grower              CannabisProfessional @relation("GrowerPackages", fields: [growerId], references: [id])
+  labTest             LabTest?             @relation(fields: [labTestId], references: [id])
+  strain              CannabisStrain       @relation(fields: [strainId], references: [id])
+  scans               QRScan[]
+  seedToSaleEvents    SeedToSaleEvent[]
+
+  @@index([packageId])
+  @@index([strainId])
+  @@index([growerId])
+  @@index([harvestDate])
+  @@index([status])
+}
+
+model CannabisNFT {
+  id                  String           @id @default(cuid())
+  tokenId             String           @unique
+  name                String
+  description         String?
+  imageUrl            String
+  animationUrl        String?
+  metadataUrl         String?
+  packageId           String
+  strainId            String
+  creatorId           String
+  ownerId             String
+  artistId            String?
+  blockchain          String           @default("ethereum")
+  contractAddress     String?
+  price               Float?
+  currency            String           @default("ETH")
+  rarityScore         Float            @default(50)
+  rarityRank          Int?
+  traits              Json
+  royaltyPercentage   Float            @default(0)
+  isMinted            Boolean          @default(false)
+  mintTransactionHash String?
+  status              NftStatus        @default(ACTIVE)
+  viewCount           Int              @default(0)
+  likeCount           Int              @default(0)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  artist              CannabisArtist?  @relation(fields: [artistId], references: [id])
+  creator             User             @relation("CreatedNFTs", fields: [creatorId], references: [id])
+  owner               User             @relation("OwnedNFTs", fields: [ownerId], references: [id])
+  package             CannabisPackage  @relation(fields: [packageId], references: [id])
+  strain              CannabisStrain   @relation(fields: [strainId], references: [id])
+  likes               NFTLike[]
+  sales               NFTSale[]
+  royaltyPayments     RoyaltyPayment[]
+
+  @@index([tokenId])
+  @@index([packageId])
+  @@index([creatorId])
+  @@index([ownerId])
+  @@index([rarityScore])
+  @@index([createdAt])
+}
+
+model LabTest {
+  id             String            @id @default(cuid())
+  testNumber     String            @unique
+  testDate       DateTime
+  labId          String
+  packageId      String?
+  batchNumber    String
+  cannabinoids   Json
+  terpenes       Json?
+  contaminants   Json?
+  moisture       Float?
+  waterActivity  Float?
+  certificateUrl String?
+  qrCodeData     String?
+  status         TestStatus        @default(PENDING)
+  isPublic       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  packages       CannabisPackage[]
+  lab            LabPartner        @relation(fields: [labId], references: [id])
+
+  @@index([testNumber])
+  @@index([labId])
+  @@index([testDate])
+  @@index([status])
+}
+
+model SeedToSaleEvent {
+  id              String                @id @default(cuid())
+  packageId       String
+  stage           SeedToSaleStage
+  timestamp       DateTime
+  location        String?
+  operatorLicense String?
+  operatorId      String?
+  notes           String?
+  gpsCoordinates  Json?
+  environmentData Json?
+  photoUrls       String[]
+  blockchainHash  String?
+  isVerified      Boolean               @default(false)
+  createdAt       DateTime              @default(now())
+  operator        CannabisProfessional? @relation(fields: [operatorId], references: [id])
+  package         CannabisPackage       @relation(fields: [packageId], references: [id])
+
+  @@index([packageId])
+  @@index([stage])
+  @@index([timestamp])
+  @@index([operatorId])
+}
+
+model CannabisProfessional {
+  id               String             @id @default(cuid())
+  userId           String?            @unique
+  businessName     String
+  licenseNumber    String             @unique
+  licenseType      LicenseType
+  licenseExpiry    DateTime
+  contactEmail     String
+  contactPhone     String?
+  address          Json
+  status           ProfessionalStatus @default(PENDING)
+  isVerified       Boolean            @default(false)
+  verificationDate DateTime?
+  monthlyPackages  Int                @default(0)
+  totalRevenue     Float              @default(0)
+  rating           Float              @default(0)
+  reviewCount      Int                @default(0)
+  profileImageUrl  String?
+  bannerImageUrl   String?
+  description      String?
+  specialties      String[]
+  certifications   Json?
+  socialLinks      Json?
+  joinedDate       DateTime           @default(now())
+  lastActive       DateTime           @default(now())
+  packages         CannabisPackage[]  @relation("GrowerPackages")
+  user             User?              @relation(fields: [userId], references: [id])
+  seedToSaleEvents SeedToSaleEvent[]
+
+  @@index([licenseNumber])
+  @@index([licenseType])
+  @@index([status])
+  @@index([isVerified])
+}
+
+model CannabisArtist {
+  id              String           @id @default(cuid())
+  userId          String?          @unique
+  artistName      String           @unique
+  bio             String?
+  walletAddress   String?
+  portfolioUrl    String?
+  socialLinks     Json?
+  specializations String[]
+  experienceLevel ArtistLevel      @default(BEGINNER)
+  totalArtworks   Int              @default(0)
+  totalRoyalties  Float            @default(0)
+  averageRating   Float            @default(0)
+  reviewCount     Int              @default(0)
+  isVerified      Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  commissionRate  Float            @default(10)
+  minCommission   Float            @default(50)
+  profileImageUrl String?
+  bannerImageUrl  String?
+  featuredWorkUrl String?
+  joinedDate      DateTime         @default(now())
+  lastActive      DateTime         @default(now())
+  commissions     ArtCommission[]
+  artworks        Artwork[]
+  user            User?            @relation(fields: [userId], references: [id])
+  nfts            CannabisNFT[]
+  royaltyPayments RoyaltyPayment[]
+
+  @@index([artistName])
+  @@index([isVerified])
+  @@index([isActive])
+  @@index([totalRoyalties])
+}
+
+model Artwork {
+  id            String          @id @default(cuid())
+  title         String
+  description   String?
+  imageUrl      String
+  thumbnailUrl  String?
+  artistId      String
+  category      ArtworkCategory
+  tags          String[]
+  isForSale     Boolean         @default(false)
+  price         Float?
+  currency      String          @default("USD")
+  licenseType   LicenseType     @default(EXCLUSIVE)
+  usageRights   Json?
+  dimensions    Json?
+  fileFormat    String?
+  fileSize      Int?
+  isNSFW        Boolean         @default(false)
+  downloadCount Int             @default(0)
+  likeCount     Int             @default(0)
+  viewCount     Int             @default(0)
+  status        ArtworkStatus   @default(PUBLISHED)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  commissions   ArtCommission[]
+  artist        CannabisArtist  @relation(fields: [artistId], references: [id])
+  likes         ArtworkLike[]
+
+  @@index([artistId])
+  @@index([category])
+  @@index([isForSale])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ArtCommission {
+  id                String           @id @default(cuid())
+  clientId          String
+  artistId          String
+  artworkId         String?
+  title             String
+  description       String
+  budget            Float
+  currency          String           @default("USD")
+  deadline          DateTime?
+  status            CommissionStatus @default(PENDING)
+  paymentStatus     PaymentStatus    @default(PENDING)
+  artworkFiles      Json?
+  revisionCount     Int              @default(0)
+  maxRevisions      Int              @default(3)
+  communicationLog  Json?
+  contractUrl       String?
+  finalPrice        Float?
+  paidAmount        Float?
+  royaltyPercentage Float?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  completedAt       DateTime?
+  artist            CannabisArtist   @relation(fields: [artistId], references: [id])
+  artwork           Artwork?         @relation(fields: [artworkId], references: [id])
+  client            User             @relation("ClientCommissions", fields: [clientId], references: [id])
+
+  @@index([clientId])
+  @@index([artistId])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model QRScan {
+  id            String          @id @default(cuid())
+  packageId     String
+  scannerId     String?
+  scannerIp     String
+  deviceInfo    Json?
+  location      Json?
+  timestamp     DateTime        @default(now())
+  wasSuccessful Boolean         @default(true)
+  nftCreated    Boolean         @default(false)
+  nftId         String?
+  package       CannabisPackage @relation(fields: [packageId], references: [id])
+  scanner       User?           @relation(fields: [scannerId], references: [id])
+
+  @@index([packageId])
+  @@index([scannerId])
+  @@index([timestamp])
+}
+
+model RoyaltyPayment {
+  id                String         @id @default(cuid())
+  nftId             String
+  artistId          String
+  amount            Float
+  currency          String         @default("ETH")
+  transactionHash   String?
+  blockchainNetwork String         @default("ethereum")
+  paymentDate       DateTime       @default(now())
+  status            PaymentStatus  @default(PENDING)
+  saleId            String?
+  artist            CannabisArtist @relation(fields: [artistId], references: [id])
+  nft               CannabisNFT    @relation(fields: [nftId], references: [id])
+  sale              NFTSale?       @relation(fields: [saleId], references: [id])
+
+  @@index([nftId])
+  @@index([artistId])
+  @@index([paymentDate])
+  @@index([status])
+}
+
+model NFTSale {
+  id                String           @id @default(cuid())
+  nftId             String
+  sellerId          String
+  buyerId           String?
+  price             Float
+  currency          String           @default("ETH")
+  transactionHash   String?
+  blockchainNetwork String           @default("ethereum")
+  saleDate          DateTime         @default(now())
+  status            SaleStatus       @default(LISTED)
+  marketplaceFee    Float            @default(0)
+  royaltyFee        Float            @default(0)
+  buyer             User?            @relation("BoughtNFTs", fields: [buyerId], references: [id])
+  nft               CannabisNFT      @relation(fields: [nftId], references: [id])
+  seller            User             @relation("SoldNFTs", fields: [sellerId], references: [id])
+  royaltyPayments   RoyaltyPayment[]
+
+  @@index([nftId])
+  @@index([sellerId])
+  @@index([buyerId])
+  @@index([saleDate])
+  @@index([status])
+}
+
+model NFTLike {
+  id        String      @id @default(cuid())
+  nftId     String
+  userId    String
+  createdAt DateTime    @default(now())
+  nft       CannabisNFT @relation(fields: [nftId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@unique([nftId, userId])
+  @@index([nftId])
+  @@index([userId])
+}
+
+model ArtworkLike {
+  id        String   @id @default(cuid())
+  artworkId String
+  userId    String
+  createdAt DateTime @default(now())
+  artwork   Artwork  @relation(fields: [artworkId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([artworkId, userId])
+  @@index([artworkId])
+  @@index([userId])
+}
+
+model WhiteLabelClient {
+  id               String                  @id @default(cuid())
+  name             String
+  domain           String?                 @unique
+  logo             String?
+  status           WhiteLabelStatus        @default(SETUP)
+  tier             SubscriptionTier        @default(ENTERPRISE)
+  locations        Int                     @default(1)
+  monthlyRevenue   Float                   @default(0)
+  setupFee         Float                   @default(0)
+  monthlyFee       Float                   @default(499)
+  customBranding   Boolean                 @default(true)
+  apiAccess        Boolean                 @default(true)
+  mobileApp        Boolean                 @default(false)
+  dedicatedSupport Boolean                 @default(false)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  integrations     WhiteLabelIntegration[]
+
+  @@index([status])
+  @@index([tier])
+}
+
+model WhiteLabelIntegration {
+  id               String            @id @default(cuid())
+  whiteLabelId     String
+  integrationType  String
+  status           IntegrationStatus @default(PENDING)
+  apiEndpoint      String?
+  credentials      Json?
+  monthlyUsage     Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  whiteLabelClient WhiteLabelClient  @relation(fields: [whiteLabelId], references: [id])
+
+  @@index([whiteLabelId])
+  @@index([integrationType])
+}
+
+model ApiUsage {
+  id       String   @id @default(cuid())
+  clientId String
+  endpoint String
+  calls    Int      @default(0)
+  revenue  Float    @default(0)
+  tier     ApiTier  @default(DEVELOPER)
+  date     DateTime @default(now())
+  metadata Json?
+
+  @@index([clientId])
+  @@index([endpoint])
+  @@index([date])
+}
+
+model DispensaryPartner {
+  id              String        @id @default(cuid())
+  name            String
+  logo            String?
+  locations       Int           @default(1)
+  monthlyScans    Int           @default(0)
+  revenue         Float         @default(0)
+  status          PartnerStatus @default(ACTIVE)
+  partnershipType String        @default("STANDARD")
+  contactEmail    String?
+  integrationDate DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([partnershipType])
+}
+
+model LabPartner {
+  id              String        @id @default(cuid())
+  name            String
+  monthlyTests    Int           @default(0)
+  revenue         Float         @default(0)
+  integrationType String        @default("API")
+  status          PartnerStatus @default(ACTIVE)
+  accuracy        Float         @default(0.0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  labTests        LabTest[]
+
+  @@index([status])
+  @@index([integrationType])
+}
+
+model LaunchBonus {
+  id         String           @id @default(cuid())
+  userId     String
+  bonusType  LaunchBonusType
+  tier       SubscriptionTier
+  claimed    Boolean          @default(true)
+  claimedAt  DateTime         @default(now())
+  bonusValue Int              @default(0)
+  expiresAt  DateTime?
+  resources  Json? // List of bonus resources/content
+  metadata   Json?
+
+  @@index([userId])
+  @@index([bonusType])
+  @@index([tier])
+}
+
+model CommercialLicense {
+  id                String                @id @default(cuid())
+  userId            String
+  licenseType       CommercialLicenseType
+  licenseKey        String                @unique
+  issuedAt          DateTime              @default(now())
+  expiresAt         DateTime?
+  clientLimit       Int                   @default(5)
+  whiteLabelEnabled Boolean               @default(false)
+  isActive          Boolean               @default(true)
+  metadata          Json?
+
+  @@index([userId])
+  @@index([licenseType])
+  @@index([licenseKey])
+}
+
+model AffiliatePartner {
+  id               String          @id @default(cuid())
+  userId           String?
+  name             String
+  email            String          @unique
+  status           AffiliateStatus @default(PENDING)
+  commissionRate   Float           @default(0.3)
+  totalEarnings    Float           @default(0)
+  totalConversions Int             @default(0)
+  payoutThreshold  Float           @default(100)
+  availableBalance Float           @default(0)
+  paidBalance      Float           @default(0)
+  affiliateCode    String          @unique
+  website          String?
+  socialLinks      Json?
+  notes            String?
+  approvedAt       DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([email])
+  @@index([status])
+  @@index([affiliateCode])
+}
+
+// ====================================
+// ADDITIONAL MODELS FOR COMPLETE MARKETPLACE FUNCTIONALITY
+// ====================================
+
+model Transaction {
+  id              String            @id @default(cuid())
+  userId          String?
+  transactionType TransactionType
+  amount          Float
+  currency        String            @default("USD")
+  status          TransactionStatus @default(PENDING)
+  paymentMethod   PaymentMethod     @default(STRIPE)
+  stripePaymentId String?
+  stripeSessionId String?
+  cryptoAddress   String?
+  cryptoTxHash    String?
+  description     String?
+  metadata        Json?
+  referenceId     String? // Reference to related entity (NFT, Subscription, etc.)
+  referenceType   String? // Type of reference (nft, subscription, etc.)
+  escrowId        String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  completedAt     DateTime?
+  failedAt        DateTime?
+  errorMessage    String?
+  escrow          Escrow?           @relation(fields: [escrowId], references: [id])
+
+  @@index([userId])
+  @@index([transactionType])
+  @@index([status])
+  @@index([stripePaymentId])
+  @@index([cryptoTxHash])
+  @@index([referenceId])
+  @@index([createdAt])
+}
+
+model Escrow {
+  id               String        @id @default(cuid())
+  transactionId    String?
+  buyerId          String
+  sellerId         String
+  amount           Float
+  currency         String        @default("USD")
+  status           EscrowStatus  @default(CREATED)
+  releaseCondition String? // Description of release conditions
+  buyerApproved    Boolean       @default(false)
+  sellerApproved   Boolean       @default(false)
+  adminApproved    Boolean       @default(false)
+  releasedAmount   Float?
+  disputeReason    String?
+  resolutionNotes  String?
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  releasedAt       DateTime?
+  disputedAt       DateTime?
+  resolvedAt       DateTime?
+  transactions     Transaction[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EnterpriseAPIKey {
+  id          String       @id @default(cuid())
+  userId      String
+  clientId    String? // Reference to WhiteLabelClient
+  name        String
+  apiKey      String       @unique
+  apiSecret   String
+  tier        ApiTier      @default(DEVELOPER)
+  status      APIKeyStatus @default(ACTIVE)
+  permissions String[] // List of allowed endpoints/actions
+  rateLimit   Int          @default(1000) // Requests per hour
+  usageCount  Int          @default(0)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  ipWhitelist String[]
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  revokedAt   DateTime?
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([apiKey])
+  @@index([status])
+  @@index([tier])
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  sessionId  String?
+  eventType  String
+  eventName  String
+  category   String?
+  properties Json?
+  userAgent  String?
+  ipAddress  String?
+  country    String?
+  city       String?
+  referrer   String?
+  path       String?
+  timestamp  DateTime @default(now())
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([eventName])
+  @@index([timestamp])
+  @@index([category])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  metadata  Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model Payout {
+  id               String       @id @default(cuid())
+  userId           String?
+  affiliateId      String?
+  amount           Float
+  currency         String       @default("USD")
+  method           PayoutMethod @default(BANK_TRANSFER)
+  status           PayoutStatus @default(PENDING)
+  stripeTransferId String?
+  bankDetails      Json?
+  cryptoAddress    String?
+  cryptoTxHash     String?
+  notes            String?
+  requestedAt      DateTime     @default(now())
+  processedAt      DateTime?
+  completedAt      DateTime?
+  failedAt         DateTime?
+  errorMessage     String?
+
+  @@index([userId])
+  @@index([affiliateId])
+  @@index([status])
+  @@index([requestedAt])
+}
+
+model MultiCurrencyPrice {
+  id           String   @id @default(cuid())
+  entityType   String // 'nft', 'subscription', 'product'
+  entityId     String
+  currency     String
+  price        Float
+  exchangeRate Float? // Rate at time of setting
+  updatedAt    DateTime @updatedAt
+
+  @@unique([entityType, entityId, currency])
+  @@index([entityType, entityId])
+}
+
+model FavoriteNFT {
+  id        String   @id @default(cuid())
+  userId    String
+  nftId     String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, nftId])
+  @@index([userId])
+  @@index([nftId])
+}
+
+model WatchlistCollection {
+  id           String   @id @default(cuid())
+  userId       String
+  collectionId String
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, collectionId])
+  @@index([userId])
+  @@index([collectionId])
+}
+
+// ====================================
+// PHASE 1: ESSENTIAL NFT MARKETPLACE MODELS
+// ====================================
+
+model Collection {
+  id                String             @id @default(cuid())
+  name              String
+  slug              String             @unique
+  description       String?
+  coverImage        String?
+  bannerImage       String?
+  creatorId         String
+  category          CollectionCategory @default(ART)
+  floorPrice        Float?
+  totalVolume       Float              @default(0)
+  itemCount         Int                @default(0)
+  ownerCount        Int                @default(0)
+  isVerified        Boolean            @default(false)
+  royaltyPercentage Float              @default(0)
+  blockchain        String             @default("ethereum")
+  contractAddress   String?
+  isPublic          Boolean            @default(true)
+  tags              String[]
+  socialLinks       Json?
+  metadata          Json?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  nfts              NFT[]
+
+  @@index([creatorId])
+  @@index([category])
+  @@index([floorPrice])
+  @@index([totalVolume])
+  @@index([isVerified])
+  @@index([createdAt])
+}
+
+model NFT {
+  id                  String         @id @default(cuid())
+  tokenId             String         @unique
+  contractAddress     String
+  blockchain          String         @default("ethereum")
+  name                String
+  description         String?
+  image               String
+  imageIpfs           String?
+  animationUrl        String?
+  externalUrl         String?
+  metadata            Json?
+  metadataIpfs        String?
+  collectionId        String?
+  creatorId           String
+  ownerId             String
+  price               Float?
+  currency            String         @default("ETH")
+  royaltyPercentage   Float          @default(0)
+  status              NftStatus      @default(ACTIVE)
+  listingType         ListingType    @default(FIXED_PRICE)
+  isVerified          Boolean        @default(false)
+  authenticityScore   Int?
+  attributes          Json?
+  rarityScore         Float?
+  rarityRank          Int?
+  viewCount           Int            @default(0)
+  likeCount           Int            @default(0)
+  isMinted            Boolean        @default(false)
+  mintTransactionHash String?
+  mintedAt            DateTime?
+  lastSalePrice       Float?
+  lastSaleDate        DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  collection          Collection?    @relation(fields: [collectionId], references: [id])
+  auctions            Auction[]
+  bids                Bid[]
+  nftTransfers        NFTTransfer[]
+  offers              Offer[]
+  priceHistory        PriceHistory[]
+
+  @@index([tokenId])
+  @@index([contractAddress])
+  @@index([collectionId])
+  @@index([creatorId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([listingType])
+  @@index([price])
+  @@index([createdAt])
+  @@index([isVerified])
+}
+
+model Auction {
+  id              String        @id @default(cuid())
+  nftId           String
+  sellerId        String
+  startPrice      Float
+  reservePrice    Float?
+  currentBid      Float?
+  currentBidderId String?
+  bidIncrement    Float         @default(0.01)
+  startTime       DateTime      @default(now())
+  endTime         DateTime
+  status          AuctionStatus @default(ACTIVE)
+  winnerId        String?
+  winningBid      Float?
+  settledAt       DateTime?
+  transactionHash String?
+  bidCount        Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  nft             NFT           @relation(fields: [nftId], references: [id])
+  bids            Bid[]
+
+  @@index([nftId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([endTime])
+  @@index([createdAt])
+}
+
+model Bid {
+  id              String    @id @default(cuid())
+  auctionId       String?
+  nftId           String?
+  bidderId        String
+  amount          Float
+  status          BidStatus @default(ACTIVE)
+  transactionHash String?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  auction         Auction?  @relation(fields: [auctionId], references: [id])
+  nft             NFT?      @relation(fields: [nftId], references: [id])
+
+  @@index([auctionId])
+  @@index([nftId])
+  @@index([bidderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Offer {
+  id              String      @id @default(cuid())
+  nftId           String
+  offererId       String
+  amount          Float
+  currency        String      @default("ETH")
+  message         String?
+  status          OfferStatus @default(PENDING)
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  rejectedAt      DateTime?
+  cancelledAt     DateTime?
+  transactionHash String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  nft             NFT         @relation(fields: [nftId], references: [id])
+
+  @@index([nftId])
+  @@index([offererId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([createdAt])
+}
+
+model NFTTransfer {
+  id              String       @id @default(cuid())
+  nftId           String
+  fromAddress     String
+  toAddress       String
+  transactionHash String
+  blockchain      String       @default("ethereum")
+  transferType    TransferType @default(SALE)
+  price           Float?
+  currency        String?
+  timestamp       DateTime     @default(now())
+  nft             NFT          @relation(fields: [nftId], references: [id])
+
+  @@index([nftId])
+  @@index([fromAddress])
+  @@index([toAddress])
+  @@index([transactionHash])
+  @@index([timestamp])
+}
+
+model PriceHistory {
+  id        String         @id @default(cuid())
+  nftId     String
+  price     Float
+  currency  String         @default("ETH")
+  eventType PriceEventType @default(LISTING)
+  timestamp DateTime       @default(now())
+  nft       NFT            @relation(fields: [nftId], references: [id])
+
+  @@index([nftId])
+  @@index([timestamp])
+}
+
+enum SubscriptionTier {
+  EXPLORER
+  CREATOR
+  PRO
+  ENTERPRISE
+  AGENCY
+  // Legacy tiers (deprecated but kept for backwards compatibility)
+  FREE
+  BASIC
+  BRAND
+  CORPORATE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
+}
+
+enum UserRole {
+  ADMIN
+  CONSUMER
+}
+
+enum NftStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+  LISTED
+  UNLISTED
+  IN_AUCTION
+  SOLD
+  BURNED
+}
+
+enum UsageType {
+  NFT_UPLOAD
+  CUSTOM_USERNAME
+  ANALYTICS_VIEW
+}
+
+enum LeadStatus {
+  ACTIVE
+  CONVERTED
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+enum CampaignType {
+  EMAIL_SEQUENCE
+  LANDING_PAGE
+  SOCIAL_MEDIA
+  REFERRAL_PROGRAM
+  AFFILIATE_PROMOTION
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ReferralType {
+  USER
+  AFFILIATE
+  INFLUENCER
+}
+
+enum ConversionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+// Marketing Enhancement Models
+
+model PromotionalCampaign {
+  id             String                @id @default(cuid())
+  name           String                @unique
+  type           String
+  status         String                @default("ACTIVE")
+  startDate      DateTime
+  endDate        DateTime?
+  targetMetrics  Json                  @default("{}")
+  actualMetrics  Json                  @default("{}")
+  configuration  Json                  @default("{}")
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  interactions   CampaignInteraction[]
+}
+
+model CampaignInteraction {
+  id         String               @id @default(cuid())
+  campaignId String
+  email      String?
+  action     String // 'view', 'click', 'conversion', 'dismiss'
+  value      Float                @default(0)
+  metadata   Json                 @default("{}")
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime             @default(now())
+  campaign   PromotionalCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([email])
+  @@index([action])
+}
+
+model LeadMagnetDownload {
+  id          String   @id @default(cuid())
+  email       String
+  magnetId    String
+  magnetTitle String
+  downloadUrl String?
+  campaign    String   @default("general")
+  source      String   @default("organic")
+  ipAddress   String?
+  userAgent   String?
+  referralCode String?
+  createdAt   DateTime @default(now())
+  lead        MarketingLead @relation(fields: [email], references: [email], onDelete: Cascade)
+
+  @@index([email])
+  @@index([magnetId])
+  @@index([campaign])
+}
+
+model AffiliatePerformance {
+  id             String       @id @default(cuid())
+  affiliateId    String
+  month          Int
+  year           Int
+  clicks         Int          @default(0)
+  conversions    Int          @default(0)
+  revenue        Float        @default(0)
+  commission     Float        @default(0)
+  conversionRate Float        @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  affiliate      ReferralCode @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@unique([affiliateId, month, year])
+  @@index([affiliateId])
+}
+
+model BonusPackageAssignment {
+  id           String    @id @default(cuid())
+  userId       String
+  packageTier  String // 'CREATOR', 'PRO', 'ENTERPRISE'
+  packageValue Float
+  components   Json      @default("{}")
+  status       String    @default("ACTIVE") // 'ACTIVE', 'CLAIMED', 'EXPIRED'
+  expiresAt    DateTime?
+  claimedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, packageTier])
+  @@index([userId])
+}
+
+model WebhookEvent {
+  id              String    @id @default(cuid())
+  eventType       String
+  payload         Json
+  signature       String?
+  processed       Boolean   @default(false)
+  processingError String?
+  retryCount      Int       @default(0)
+  createdAt       DateTime  @default(now())
+  processedAt     DateTime?
+
+  @@index([eventType])
+  @@index([processed])
+  @@index([createdAt])
+}
+
+enum StrainType {
+  INDICA
+  SATIVA
+  HYBRID
+}
+
+enum PackageStatus {
+  ACTIVE
+  EXPIRED
+  RECALLED
+  DESTROYED
+}
+
+enum TestStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum SeedToSaleStage {
+  SEED
+  CLONE
+  VEGETATIVE
+  FLOWERING
+  HARVEST
+  PROCESSING
+  PACKAGING
+  DISTRIBUTION
+  RETAIL
+  CONSUMED
+}
+
+enum LicenseType {
+  GROWER
+  PROCESSOR
+  DISTRIBUTOR
+  RETAILER
+  TESTING_LAB
+  DELIVERY
+  EXCLUSIVE
+  NON_EXCLUSIVE
+}
+
+enum ProfessionalStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+  REVOKED
+}
+
+enum ArtistLevel {
+  BEGINNER
+  INTERMEDIATE
+  EXPERT
+  MASTER
+}
+
+enum ArtworkCategory {
+  PACKAGE_DESIGN
+  STRAIN_ART
+  CHARACTER_DESIGN
+  LOGO_DESIGN
+  BANNER_DESIGN
+  SOCIAL_MEDIA
+  PROMOTIONAL
+  NFT_ART
+}
+
+enum ArtworkStatus {
+  DRAFT
+  PUBLISHED
+  PRIVATE
+  ARCHIVED
+}
+
+enum CommissionStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  REVISION_REQUESTED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum SaleStatus {
+  LISTED
+  SOLD
+  CANCELLED
+  EXPIRED
+}
+
+enum WhiteLabelStatus {
+  SETUP
+  DEVELOPMENT
+  TESTING
+  ACTIVE
+  SUSPENDED
+}
+
+enum IntegrationStatus {
+  PENDING
+  DEVELOPMENT
+  TESTING
+  ACTIVE
+  FAILED
+}
+
+enum ApiTier {
+  DEVELOPER
+  BUSINESS
+  ENTERPRISE
+}
+
+enum PartnerStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum LaunchBonusType {
+  FOUNDERS_CIRCLE
+  LAUNCH_WEEK_BONANZA
+  PIONEER_PROGRAM
+  CREATOR_LAUNCH_KIT
+  PRO_LAUNCH_BUNDLE
+  ENTERPRISE_DOMINATION_SUITE
+  AGENCY_EMPIRE_BUILDER
+}
+
+enum CommercialLicenseType {
+  BASIC
+  ADVANCED
+  AGENCY
+}
+
+enum AffiliateStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+// ====================================
+// PHASE 1: NFT MARKETPLACE ENUMS
+// ====================================
+
+enum CollectionCategory {
+  ART
+  PHOTOGRAPHY
+  MUSIC
+  VIDEO
+  GAMING
+  SPORTS
+  COLLECTIBLES
+  UTILITY
+  DOMAIN_NAMES
+  VIRTUAL_WORLDS
+  TRADING_CARDS
+  MEMBERSHIP
+  OTHER
+}
+
+enum ListingType {
+  FIXED_PRICE
+  AUCTION
+  NOT_FOR_SALE
+}
+
+enum AuctionStatus {
+  PENDING
+  ACTIVE
+  ENDED
+  SETTLED
+  CANCELLED
+}
+
+enum BidStatus {
+  ACTIVE
+  OUTBID
+  WINNING
+  WON
+  LOST
+  CANCELLED
+  EXPIRED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+enum TransferType {
+  MINT
+  SALE
+  TRANSFER
+  BURN
+}
+
+enum PriceEventType {
+  LISTING
+  SALE
+  DELISTING
+  PRICE_CHANGE
+}
+
+// ====================================
+// ENUMS FOR ADDITIONAL MODELS
+// ====================================
+
+enum TransactionType {
+  NFT_PURCHASE
+  NFT_SALE
+  SUBSCRIPTION_PAYMENT
+  AUCTION_BID
+  AUCTION_SETTLEMENT
+  ESCROW_DEPOSIT
+  ESCROW_RELEASE
+  ROYALTY_PAYMENT
+  AFFILIATE_COMMISSION
+  REFUND
+  WITHDRAWAL
+  DEPOSIT
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  STRIPE
+  CRYPTO_ETH
+  CRYPTO_MATIC
+  CRYPTO_USDC
+  BANK_TRANSFER
+  PAYPAL
+}
+
+enum EscrowStatus {
+  CREATED
+  FUNDED
+  IN_REVIEW
+  APPROVED
+  DISPUTED
+  RELEASED
+  REFUNDED
+  CANCELLED
+}
+
+enum APIKeyStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+  EXPIRED
+}
+
+enum NotificationType {
+  NFT_SOLD
+  NFT_PURCHASED
+  BID_RECEIVED
+  BID_OUTBID
+  BID_WON
+  AUCTION_ENDING_SOON
+  AUCTION_ENDED
+  OFFER_RECEIVED
+  OFFER_ACCEPTED
+  OFFER_REJECTED
+  COLLECTION_UPDATE
+  SUBSCRIPTION_EXPIRING
+  SUBSCRIPTION_RENEWED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  PAYOUT_PROCESSED
+  AFFILIATE_CONVERSION
+  SYSTEM_ALERT
+}
+
+enum PayoutMethod {
+  BANK_TRANSFER
+  PAYPAL
+  CRYPTO_ETH
+  CRYPTO_USDC
+  STRIPE_TRANSFER
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+// Force rebuild 1761677768

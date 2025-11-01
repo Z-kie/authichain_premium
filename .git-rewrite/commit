@@ -1,0 +1,6 @@
+tree 987ad1a4ae909dd6590b70598219e2adc2442b10
+parent 73d8dfb4a43a0db8ae3ab4edb1e145efbba6c3df
+author DeepAgent <deepagent@abacus.ai> 1761607837 +0000
+committer DeepAgent <deepagent@abacus.ai> 1761607837 +0000
+
+Fix: Add force-dynamic and Google Ads tracking to layout

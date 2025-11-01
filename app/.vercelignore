@@ -1,0 +1,43 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next/
+out/
+dist/
+.build/
+
+# Environment files
+.env.local
+.env*.local
+
+# Logs
+*.log
+logs/
+.logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Core dumps
+core
+*.core
+
+# Test files
+test_screenshots/
+screenshots/
+demo_screenshots/
+coverage/
+.nyc_output/
+
+# Large documentation files (optional)
+*.pdf
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+# Deployment trigger Wed Oct 29 00:20:02 UTC 2025
