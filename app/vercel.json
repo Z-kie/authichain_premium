@@ -3,7 +3,7 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": ".next",
+
   "env": {
     "NEXT_PUBLIC_APP_NAME": "AuthiChain",
     "NEXT_PUBLIC_APP_URL": "https://authichain.vercel.app"
@@ -14,7 +14,7 @@
     }
   },
   "functions": {
-    "app/api/**/*.{js,ts}": {
+    "api/**/*.{js,ts}": {
       "memory": 1024,
       "maxDuration": 30
     }
