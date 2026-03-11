@@ -4,6 +4,8 @@
  * Handles lifecycle emails, onboarding, retention, and win-back campaigns
  */
 
+import { getEmailServiceInstance } from './email';
+
 interface EmailTemplate {
   id: string;
   name: string;
@@ -160,15 +162,15 @@ export class EmailAutomation {
     body: string,
     metadata?: any
   ): Promise<boolean> {
-    // TODO: Integrate with actual email service (SendGrid, Mailgun, etc.)
-    console.log('Sending email:', { to, subject, body, metadata });
-    
-    // Placeholder for email service integration
-    // const sg = require('@sendgrid/mail');
-    // sg.setApiKey(process.env.SENDGRID_API_KEY);
-    // await sg.send({ to, subject, html: body });
-
-    return true;
+    try {
+      const service = getEmailServiceInstance();
+      await service.sendEmail(to, subject, body);
+      console.log('Email sent successfully:', { to, subject, metadata });
+      return true;
+    } catch (error) {
+      console.error('Email send failed:', { to, subject, error });
+      return false;
+    }
   }
 
   /**

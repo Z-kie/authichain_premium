@@ -34,7 +34,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       'Email support',
       'Creator community access'
     ],
-    stripePriceId: process.env.STRIPE_CREATOR_PRICE_ID || process.env.STRIPE_CREATOR_MONTHLY_PRICE_ID
+    stripePriceId: process.env.STRIPE_CREATOR_PRICE_ID || process.env.STRIPE_PRICE_CREATOR_MONTHLY || 'price_1T9aoZGqTruSqV8T2SGdXOpo'
   },
   [SubscriptionTier.PRO]: {
     tier: SubscriptionTier.PRO,
@@ -53,7 +53,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       'Escrow service included',
       'Multi-currency support'
     ],
-    stripePriceId: process.env.STRIPE_PRO_PRICE_ID || process.env.STRIPE_PRO_MONTHLY_PRICE_ID
+    stripePriceId: process.env.STRIPE_PRO_PRICE_ID || process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_1T9aouGqTruSqV8TEKCHR3xc'
   },
   [SubscriptionTier.ENTERPRISE]: {
     tier: SubscriptionTier.ENTERPRISE,
@@ -72,7 +72,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       'Marketing automation suite',
       'Advanced fraud protection'
     ],
-    stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID
+    stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || 'price_1T9apFGqTruSqV8TLTGaNO7U'
   },
   [SubscriptionTier.AGENCY]: {
     tier: SubscriptionTier.AGENCY,
@@ -90,7 +90,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       'Custom pricing for clients',
       'Revenue sharing program'
     ],
-    stripePriceId: process.env.STRIPE_AGENCY_PRICE_ID || process.env.STRIPE_AGENCY_MONTHLY_PRICE_ID
+    stripePriceId: process.env.STRIPE_AGENCY_PRICE_ID || process.env.STRIPE_PRICE_AGENCY_MONTHLY || 'price_1T9apVGqTruSqV8T0EYpDuJt'
   },
 
   // ========================================

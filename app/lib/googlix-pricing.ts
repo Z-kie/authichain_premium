@@ -242,7 +242,7 @@ export const GOOGLIX_PLANS: GoolixPlan[] = [
     platformFee: 5,
     bonuses: GOOGLIX_BONUSES.CREATOR_LAUNCH_KIT,
     launchBonusUsers: 500,
-    stripePriceId: process.env.STRIPE_CREATOR_PRICE_ID
+    stripePriceId: process.env.STRIPE_CREATOR_PRICE_ID || process.env.STRIPE_PRICE_CREATOR_MONTHLY || 'price_1T9aoZGqTruSqV8T2SGdXOpo'
   },
   {
     tier: GoolixTier.PRO,
@@ -273,7 +273,7 @@ export const GOOGLIX_PLANS: GoolixPlan[] = [
     platformFee: 3,
     bonuses: GOOGLIX_BONUSES.PRO_LAUNCH_BUNDLE,
     launchBonusUsers: 300,
-    stripePriceId: process.env.STRIPE_PRO_PRICE_ID
+    stripePriceId: process.env.STRIPE_PRO_PRICE_ID || process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_1T9aouGqTruSqV8TEKCHR3xc'
   },
   {
     tier: GoolixTier.ENTERPRISE,
@@ -305,7 +305,7 @@ export const GOOGLIX_PLANS: GoolixPlan[] = [
     },
     platformFee: 1.5,
     bonuses: GOOGLIX_BONUSES.ENTERPRISE_DOMINATION_SUITE,
-    stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID
+    stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || 'price_1T9apFGqTruSqV8TLTGaNO7U'
   },
   {
     tier: GoolixTier.AGENCY,
@@ -334,7 +334,7 @@ export const GOOGLIX_PLANS: GoolixPlan[] = [
     },
     platformFee: 0,
     bonuses: GOOGLIX_BONUSES.AGENCY_EMPIRE_BUILDER,
-    stripePriceId: process.env.STRIPE_AGENCY_PRICE_ID
+    stripePriceId: process.env.STRIPE_AGENCY_PRICE_ID || process.env.STRIPE_PRICE_AGENCY_MONTHLY || 'price_1T9apVGqTruSqV8T0EYpDuJt'
   }
 ];
 

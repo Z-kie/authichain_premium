@@ -10,24 +10,29 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-08-27.basil',
 });
 
-// Googlix Tier to Stripe Price ID Mapping
-// Updated to match existing Vercel environment variable names
+// ============================================
+// AuthiChain Tier → Stripe Price ID Mapping
+// ============================================
+// All price IDs below are LIVE prices on acct_1SXIyEGqTruSqV8T
+// Created 2026-03-10. Override via env vars for flexibility.
+// ============================================
+
 export const STRIPE_PRICE_IDS: Record<string, { monthly: string; yearly: string }> = {
   [GoolixTier.CREATOR]: {
-    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || 'price_1SKNnHBPgAq2ybOWrz7lekrZ',
-    yearly: process.env.STRIPE_PRICE_STARTER_ANNUAL || 'price_1SKNnpBPgAq2ybOWqfeNLWEm',
+    monthly: process.env.STRIPE_PRICE_CREATOR_MONTHLY || 'price_1T9aoZGqTruSqV8T2SGdXOpo',
+    yearly: process.env.STRIPE_PRICE_CREATOR_ANNUAL || 'price_1T9aogGqTruSqV8TKEFwAGvH',
   },
   [GoolixTier.PRO]: {
-    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_1SKNnIBPgAq2ybOWP8Fi7GC9',
-    yearly: process.env.STRIPE_PRICE_PRO_ANNUAL || 'price_1SKNnpBPgAq2ybOWpVKdR5Zc',
+    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_1T9aouGqTruSqV8TEKCHR3xc',
+    yearly: process.env.STRIPE_PRICE_PRO_ANNUAL || 'price_1T9aovGqTruSqV8Tv1ebVvQm',
   },
   [GoolixTier.ENTERPRISE]: {
-    monthly: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || 'price_1SKNnIBPgAq2ybOWniqFfRau',
-    yearly: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL || 'price_1SKNnqBPgAq2ybOWFf1Qhmgt',
+    monthly: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || 'price_1T9apFGqTruSqV8TLTGaNO7U',
+    yearly: process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL || 'price_1T9apHGqTruSqV8TxkeYQ0IX',
   },
   [GoolixTier.AGENCY]: {
-    monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY || 'price_1SKNnJBPgAq2ybOWC8HCLD0E',
-    yearly: process.env.STRIPE_PRICE_AGENCY_ANNUAL || 'price_1SKNnqBPgAq2ybOWY2ob8J5z',
+    monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY || 'price_1T9apVGqTruSqV8T0EYpDuJt',
+    yearly: process.env.STRIPE_PRICE_AGENCY_ANNUAL || 'price_1T9apWGqTruSqV8TR6KVb14i',
   },
 };
 
