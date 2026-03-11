@@ -57,12 +57,26 @@ const createPrismaClient = () => {
 // Singleton pattern for Prisma Client
 // Critical: Only ONE instance across the entire application
 // In serverless, this prevents connection pool exhaustion
-export const prisma = globalThis.prisma ?? createPrismaClient();
+// Lazy initialization: don't crash at import time if DATABASE_URL is missing (e.g. during build)
+let _prisma: PrismaClient | null = null;
 
-// Store in global to prevent multiple instances in development hot-reload
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = prisma;
+function getPrismaClient(): PrismaClient {
+  if (!_prisma) {
+    _prisma = globalThis.prisma ?? createPrismaClient();
+    if (process.env.NODE_ENV !== 'production') {
+      globalThis.prisma = _prisma;
+    }
+  }
+  return _prisma;
 }
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    return (getPrismaClient() as any)[prop];
+  },
+});
+
+// Global assignment is handled inside getPrismaClient()
 
 // Graceful shutdown helper for serverless
 // Ensures connections are properly closed when function ends

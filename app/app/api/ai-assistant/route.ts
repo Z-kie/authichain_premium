@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 
 // AI Executive Assistant API Route
 // Secure endpoint for AI-powered content generation
