@@ -1,13 +1,31 @@
-
 import Stripe from 'stripe';
 import { GoolixTier } from './googlix-pricing';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set');
+// ============================================
+// Lazy Stripe client – avoids crash during Next.js build
+// when STRIPE_SECRET_KEY is not available at build time.
+// The client is created on first access at runtime.
+// ============================================
+
+let _stripe: Stripe | null = null;
+
+function getStripeClient(): Stripe {
+  if (!_stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set');
+    }
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-08-27.basil' as any,
+    });
+  }
+  return _stripe;
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-08-27.basil',
+// Proxy so that `stripe.customers.create(...)` etc. work transparently
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return (getStripeClient() as any)[prop];
+  },
 });
 
 // ============================================
@@ -41,9 +59,9 @@ export const getStripePriceId = (tier: GoolixTier, billingPeriod: 'month' | 'yea
   if (tier === GoolixTier.EXPLORER) {
     return null; // Free tier
   }
-  
+
   const priceIds = STRIPE_PRICE_IDS[tier];
   if (!priceIds) return null;
-  
+
   return billingPeriod === 'year' ? priceIds.yearly : priceIds.monthly;
 };
