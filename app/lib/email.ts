@@ -55,7 +55,8 @@ class ResendEmailService implements EmailService {
 class SmtpEmailService implements EmailService {
   async sendEmail(to: string, subject: string, html: string): Promise<void> {
     // Dynamic import so nodemailer is only loaded when SMTP is configured
-    const nodemailer = (await import('nodemailer')).default;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nodemailer = (await import('nodemailer' as any)).default;
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: Number(process.env.SMTP_PORT || 587),
