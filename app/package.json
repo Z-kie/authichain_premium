@@ -5,7 +5,7 @@
     "dev": "next dev",
     "build": "if [ -f /etc/secrets/.env ]; then cp /etc/secrets/.env .env; fi && prisma generate && next build",
     "postinstall": "prisma generate",
-    "start": "next start",
+    "start": "bash render-start.sh",
     "lint": "next lint",
     "db:migrate": "prisma migrate dev",
     "db:migrate:create": "prisma migrate dev --create-only",
